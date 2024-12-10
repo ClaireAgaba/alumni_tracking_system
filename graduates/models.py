@@ -1,20 +1,49 @@
-from django.contrib.auth.models import AbstractUser
 from django.db import models
-
-# Create your models here.
+from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
-        ('admin', 'Admin'),
+        ('admin', 'Administrator'),
         ('field_officer', 'Field Officer'),
-        ('officer', 'Officer'),
+        ('viewer', 'Viewer'),
     )
-    
-    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
-    phone_number = models.CharField(max_length=15, blank=True)
+    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='viewer')
+    phone_number = models.CharField(max_length=20, blank=True)
 
     def __str__(self):
         return f"{self.username} ({self.get_user_type_display()})"
+
+class District(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    region = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        ordering = ['name']
+
+class Course(models.Model):
+    code = models.CharField(max_length=20, unique=True)
+    name = models.CharField(max_length=200)
+    department = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+    
+    class Meta:
+        ordering = ['name']
+
+class ExamCenter(models.Model):
+    code = models.CharField(max_length=20, unique=True)
+    name = models.CharField(max_length=200)
+    district = models.ForeignKey(District, on_delete=models.PROTECT)
+    
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+    
+    class Meta:
+        ordering = ['name']
 
 class Graduate(models.Model):
     GENDER_CHOICES = (
@@ -27,24 +56,28 @@ class Graduate(models.Model):
     last_name = models.CharField(max_length=100)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     date_of_birth = models.DateField()
-    contact_number = models.CharField(max_length=15)
+    contact_number = models.CharField(max_length=20)
     email = models.EmailField(blank=True)
     
     # Academic Information
     registration_number = models.CharField(max_length=50, unique=True)
-    course_name = models.CharField(max_length=200)
+    course = models.ForeignKey(Course, on_delete=models.PROTECT)
     graduation_year = models.IntegerField()
     
     # Employment Information
     is_employed = models.BooleanField(default=False)
-    employer_name = models.CharField(max_length=200, blank=True)
-    job_title = models.CharField(max_length=100, blank=True)
-    employment_date = models.DateField(null=True, blank=True)
+    employer_name = models.CharField(max_length=200, blank=True, null=True)
+    job_title = models.CharField(max_length=100, blank=True, null=True)
+    employment_start_date = models.DateField(blank=True, null=True)
     
     # System Information
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Additional fields
+    district = models.ForeignKey(District, on_delete=models.PROTECT)
+    exam_center = models.ForeignKey(ExamCenter, on_delete=models.PROTECT)
     
     def __str__(self):
         return f"{self.first_name} {self.last_name} - {self.registration_number}"

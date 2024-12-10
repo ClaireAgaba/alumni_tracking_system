@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from django.http import HttpResponse
-from django.db.models import Count
+from django.http import HttpResponse, JsonResponse
+from django.db.models import Count, Q
 import pandas as pd
 from reportlab.pdfgen import canvas
-from .models import Graduate, GraduateBulkUpload
+from .models import Graduate, GraduateBulkUpload, ExamCenter
 from .forms import GraduateForm, GraduateBulkUploadForm
 
 def is_admin(user):
@@ -16,14 +16,38 @@ def is_field_officer(user):
 
 @login_required
 def dashboard(request):
+    # Basic statistics
     total_graduates = Graduate.objects.count()
     employed_graduates = Graduate.objects.filter(is_employed=True).count()
-    graduates_by_year = Graduate.objects.values('graduation_year').annotate(count=Count('id'))
+    
+    # Graduates by year
+    graduates_by_year = list(Graduate.objects.values('graduation_year')
+                           .annotate(count=Count('id'))
+                           .order_by('graduation_year'))
+    
+    # Employment statistics by course
+    course_stats = list(Graduate.objects.values('course__name')
+                       .annotate(
+                           total=Count('id'),
+                           employed=Count('id', filter=Q(is_employed=True))
+                       )
+                       .order_by('-total'))
+    
+    # Gender distribution
+    gender_stats = list(Graduate.objects.values('gender')
+                       .annotate(count=Count('id'))
+                       .order_by('gender'))
+    
+    # Recent graduates
+    recent_graduates = Graduate.objects.all().order_by('-created_at')[:5]
     
     context = {
         'total_graduates': total_graduates,
         'employed_graduates': employed_graduates,
         'graduates_by_year': graduates_by_year,
+        'course_stats': course_stats,
+        'gender_stats': gender_stats,
+        'recent_graduates': recent_graduates,
     }
     return render(request, 'graduates/dashboard.html', context)
 
@@ -224,3 +248,11 @@ def edit_graduate(request, pk):
         'edit_mode': True,
         'graduate': graduate
     })
+
+@login_required
+def get_exam_centers(request):
+    district_id = request.GET.get('district')
+    if district_id:
+        exam_centers = ExamCenter.objects.filter(district_id=district_id).values('id', 'name')
+        return JsonResponse(list(exam_centers), safe=False)
+    return JsonResponse([], safe=False)

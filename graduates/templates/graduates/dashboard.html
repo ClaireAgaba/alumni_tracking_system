@@ -1,112 +1,147 @@
 {% extends 'graduates/base.html' %}
 
 {% block content %}
-<div class="row fade-in">
-    <!-- Stats Cards -->
-    <div class="col-md-4 mb-4">
-        <div class="stats-card">
-            <div class="icon">
-                <i class="fas fa-user-graduate"></i>
-            </div>
-            <h3>Total Graduates</h3>
-            <div class="number" id="totalGraduates">{{ total_graduates }}</div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="stats-card">
-            <div class="icon">
-                <i class="fas fa-briefcase"></i>
-            </div>
-            <h3>Employed Graduates</h3>
-            <div class="number" id="employedGraduates">{{ employed_graduates }}</div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-4">
-        <div class="stats-card">
-            <div class="icon">
-                <i class="fas fa-chart-pie"></i>
-            </div>
-            <h3>Employment Rate</h3>
-            <div class="number">
-                {% if total_graduates %}
-                {% widthratio employed_graduates total_graduates 100 %}%
-                {% else %}
-                0%
-                {% endif %}
+<div class="container-fluid py-4">
+    <!-- Stats Cards Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="stats-icon bg-primary">
+                                <i class="fas fa-user-graduate text-white"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-subtitle text-muted mb-1">Total Graduates</h6>
+                            <h2 class="card-title mb-0" id="totalGraduates">{{ total_graduates }}</h2>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
-
-<div class="row">
-    <!-- Chart -->
-    <div class="col-md-8 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">
-                    <i class="fas fa-chart-bar me-2"></i>
-                    Graduates by Year
-                </h5>
-                <div class="chart-container">
-                    <canvas id="graduatesChart"></canvas>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="stats-icon bg-success">
+                                <i class="fas fa-briefcase text-white"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-subtitle text-muted mb-1">Employed Graduates</h6>
+                            <h2 class="card-title mb-0" id="employedGraduates">{{ employed_graduates }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="stats-icon bg-info">
+                                <i class="fas fa-chart-pie text-white"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="card-subtitle text-muted mb-1">Employment Rate</h6>
+                            <h2 class="card-title mb-0">
+                                {% if total_graduates %}
+                                {% widthratio employed_graduates total_graduates 100 %}%
+                                {% else %}
+                                0%
+                                {% endif %}
+                            </h2>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">
-                    <i class="fas fa-bolt me-2"></i>
-                    Quick Actions
-                </h5>
-                <div class="list-group">
-                    {% if user.user_type == 'admin' or user.user_type == 'field_officer' %}
-                    <a href="{% url 'add_graduate' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-user-plus me-2"></i>
-                        Add Graduate
-                        <i class="fas fa-chevron-right float-end mt-1"></i>
-                    </a>
-                    <a href="{% url 'upload_graduates' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-file-upload me-2"></i>
-                        Upload Graduates
-                        <i class="fas fa-chevron-right float-end mt-1"></i>
-                    </a>
-                    {% endif %}
-                    <a href="{% url 'export_excel' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-file-excel me-2"></i>
-                        Export to Excel
-                        <i class="fas fa-chevron-right float-end mt-1"></i>
-                    </a>
-                    <a href="{% url 'export_pdf' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-file-pdf me-2"></i>
-                        Export to PDF
-                        <i class="fas fa-chevron-right float-end mt-1"></i>
-                    </a>
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <!-- Graduates by Year -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2 text-primary"></i>
+                        Graduates by Year
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="graduatesChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employment by Course -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie me-2 text-success"></i>
+                        Employment by Course
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="courseChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="row g-4">
+        <!-- Gender Distribution -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-venus-mars me-2 text-info"></i>
+                        Gender Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="genderChart" height="250"></canvas>
                 </div>
             </div>
         </div>
 
         <!-- Recent Activity -->
-        <div class="card mt-4">
-            <div class="card-body">
-                <h5 class="card-title">
-                    <i class="fas fa-clock me-2"></i>
-                    Recent Activity
-                </h5>
-                <div class="timeline">
-                    {% for graduate in graduates|slice:":5" %}
-                    <div class="timeline-item">
-                        <div class="timeline-content">
-                            <small class="text-muted">{{ graduate.created_at|timesince }} ago</small>
-                            <p class="mb-0">{{ graduate.first_name }} {{ graduate.last_name }} was added</p>
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clock me-2 text-warning"></i>
+                        Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for graduate in recent_graduates %}
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="d-flex align-items-center mb-1">
+                                    <span class="badge bg-primary me-2">New Graduate</span>
+                                    <small class="text-muted">{{ graduate.created_at|timesince }} ago</small>
+                                </div>
+                                <p class="mb-0">
+                                    {{ graduate.first_name }} {{ graduate.last_name }}
+                                    <span class="text-muted">•</span>
+                                    {{ graduate.course.name }}
+                                </p>
+                            </div>
                         </div>
+                        {% empty %}
+                        <p class="text-muted mb-0">No recent activity</p>
+                        {% endfor %}
                     </div>
-                    {% empty %}
-                    <p class="text-muted">No recent activity</p>
-                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -114,29 +149,83 @@
 </div>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    .stats-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .stats-icon i {
+        font-size: 24px;
+    }
+    
+    .timeline {
+        position: relative;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 24px;
+        padding-bottom: 20px;
+    }
+    
+    .timeline-item:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+    }
+    
+    .timeline-item:after {
+        content: '';
+        position: absolute;
+        left: -4px;
+        top: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #007bff;
+    }
+    
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+    
+    .timeline-item:last-child:before {
+        display: none;
+    }
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Animate stats numbers
-        updateStatsCard('totalGraduates', {{ total_graduates }});
-        updateStatsCard('employedGraduates', {{ employed_graduates }});
-
-        // Initialize graduates chart
-        const ctx = document.getElementById('graduatesChart').getContext('2d');
-        const graduatesData = {{ graduates_by_year|safe }};
+        // Common chart options
+        Chart.defaults.color = '#6c757d';
+        Chart.defaults.font.family = "'Poppins', 'Helvetica', 'Arial', sans-serif";
         
-        new Chart(ctx, {
+        // Graduates by Year Chart
+        const graduatesData = {{ graduates_by_year|safe }};
+        new Chart(document.getElementById('graduatesChart').getContext('2d'), {
             type: 'bar',
             data: {
                 labels: graduatesData.map(item => item.graduation_year),
                 datasets: [{
                     label: 'Number of Graduates',
                     data: graduatesData.map(item => item.count),
-                    backgroundColor: 'rgba(52, 152, 219, 0.2)',
-                    borderColor: 'rgba(52, 152, 219, 1)',
+                    backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                    borderColor: 'rgb(13, 110, 253)',
                     borderWidth: 1,
-                    borderRadius: 5,
-                    barThickness: 30
+                    borderRadius: 4,
+                    barThickness: 20
                 }]
             },
             options: {
@@ -144,9 +233,6 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'top',
-                    },
-                    title: {
                         display: false
                     }
                 },
@@ -156,6 +242,59 @@
                         ticks: {
                             stepSize: 1
                         }
+                    }
+                }
+            }
+        });
+
+        // Course Employment Chart
+        const courseData = {{ course_stats|safe }};
+        new Chart(document.getElementById('courseChart').getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: courseData.map(item => item.course__name),
+                datasets: [{
+                    data: courseData.map(item => item.employed),
+                    backgroundColor: [
+                        'rgba(13, 110, 253, 0.7)',
+                        'rgba(25, 135, 84, 0.7)',
+                        'rgba(13, 202, 240, 0.7)',
+                        'rgba(255, 193, 7, 0.7)',
+                        'rgba(220, 53, 69, 0.7)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+
+        // Gender Distribution Chart
+        const genderData = {{ gender_stats|safe }};
+        new Chart(document.getElementById('genderChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: genderData.map(item => item.gender === 'M' ? 'Male' : 'Female'),
+                datasets: [{
+                    data: genderData.map(item => item.count),
+                    backgroundColor: [
+                        'rgba(13, 110, 253, 0.7)',
+                        'rgba(255, 193, 7, 0.7)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
                     }
                 }
             }

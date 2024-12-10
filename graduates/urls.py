@@ -10,4 +10,5 @@ urlpatterns = [
     path('graduates/template/', views.download_excel_template, name='download_template'),
     path('graduates/export/excel/', views.export_graduates_excel, name='export_excel'),
     path('graduates/export/pdf/', views.export_graduates_pdf, name='export_pdf'),
+    path('api/exam-centers/', views.get_exam_centers, name='get_exam_centers'),
 ]
