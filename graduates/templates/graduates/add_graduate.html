@@ -1,0 +1,35 @@
+{% extends 'graduates/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-{% if edit_mode %}edit{% else %}user-plus{% endif %} me-2"></i>
+                        {% if edit_mode %}Edit Graduate{% else %}Add New Graduate{% endif %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="form">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                {% if edit_mode %}Update{% else %}Save{% endif %} Graduate
+                            </button>
+                            <a href="{% url 'graduate_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

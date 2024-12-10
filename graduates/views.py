@@ -41,7 +41,7 @@ def add_graduate(request):
     else:
         form = GraduateForm()
     
-    return render(request, 'graduates/graduate_form.html', {'form': form})
+    return render(request, 'graduates/add_graduate.html', {'form': form})
 
 @login_required
 def graduate_list(request):
@@ -61,29 +61,82 @@ def upload_graduates(request):
             # Process Excel file
             try:
                 df = pd.read_excel(upload.file.path)
-                for _, row in df.iterrows():
-                    Graduate.objects.create(
-                        first_name=row['First Name'],
-                        last_name=row['Last Name'],
-                        gender=row['Gender'],
-                        date_of_birth=row['Date of Birth'],
-                        contact_number=row['Contact Number'],
-                        email=row['Email'],
-                        registration_number=row['Registration Number'],
-                        course_name=row['Course Name'],
-                        graduation_year=row['Graduation Year'],
-                        is_employed=row['Is Employed'],
-                        employer_name=row.get('Employer Name', ''),
-                        job_title=row.get('Job Title', ''),
-                        employment_date=row.get('Employment Date', None),
-                        created_by=request.user
-                    )
+                
+                # Debug: Print column names and first row
+                print("Columns in Excel:", df.columns.tolist())
+                if not df.empty:
+                    print("First row:", df.iloc[0].to_dict())
+                
+                required_columns = [
+                    'first_name', 'last_name', 'gender', 'date_of_birth',
+                    'contact_number', 'email', 'registration_number',
+                    'course_name', 'graduation_year', 'is_employed'
+                ]
+                
+                # Convert column names to lowercase and strip whitespace
+                df.columns = df.columns.str.lower().str.strip()
+                
+                # Debug: Print columns after conversion
+                print("Columns after conversion:", df.columns.tolist())
+                
+                # Verify required columns
+                missing_columns = [col for col in required_columns if col not in df.columns]
+                if missing_columns:
+                    raise ValueError(f"Missing required columns: {', '.join(missing_columns)}")
+                
+                # Process each row
+                successful_imports = 0
+                for index, row in df.iterrows():
+                    try:
+                        # Convert 'Yes'/'No' to boolean for is_employed
+                        is_employed = str(row['is_employed']).lower() in ['yes', 'true', '1', 'y']
+                        
+                        # Convert date fields
+                        try:
+                            date_of_birth = pd.to_datetime(row['date_of_birth']).date()
+                        except:
+                            date_of_birth = None
+                            print(f"Invalid date_of_birth format in row {index + 2}")
+                        
+                        try:
+                            employment_date = pd.to_datetime(row['employment_date']).date() if pd.notna(row.get('employment_date')) else None
+                        except:
+                            employment_date = None
+                            print(f"Invalid employment_date format in row {index + 2}")
+                        
+                        Graduate.objects.create(
+                            first_name=str(row['first_name']),
+                            last_name=str(row['last_name']),
+                            gender=str(row['gender']),
+                            date_of_birth=date_of_birth,
+                            contact_number=str(row['contact_number']),
+                            email=str(row['email']),
+                            registration_number=str(row['registration_number']),
+                            course_name=str(row['course_name']),
+                            graduation_year=int(float(row['graduation_year'])),
+                            is_employed=is_employed,
+                            employer_name=str(row.get('employer_name', '')),
+                            job_title=str(row.get('job_title', '')),
+                            employment_date=employment_date,
+                            created_by=request.user
+                        )
+                        successful_imports += 1
+                    except Exception as row_error:
+                        print(f"Error in row {index + 2}: {str(row_error)}")
+                        continue
+                
                 upload.is_processed = True
                 upload.save()
-                messages.success(request, 'Graduates uploaded successfully!')
+                
+                if successful_imports > 0:
+                    messages.success(request, f'Successfully imported {successful_imports} graduates!')
+                else:
+                    messages.warning(request, 'No graduates were imported. Please check the file format.')
+                return redirect('graduate_list')
+            except ValueError as e:
+                messages.error(request, str(e))
             except Exception as e:
                 messages.error(request, f'Error processing file: {str(e)}')
-            return redirect('graduate_list')
     else:
         form = GraduateBulkUploadForm()
     
@@ -93,11 +146,29 @@ def upload_graduates(request):
 def download_excel_template(request):
     # Create Excel template
     df = pd.DataFrame(columns=[
-        'First Name', 'Last Name', 'Gender', 'Date of Birth',
-        'Contact Number', 'Email', 'Registration Number',
-        'Course Name', 'Graduation Year', 'Is Employed',
-        'Employer Name', 'Job Title', 'Employment Date'
+        'first_name', 'last_name', 'gender', 'date_of_birth',
+        'contact_number', 'email', 'registration_number',
+        'course_name', 'graduation_year', 'is_employed',
+        'employer_name', 'job_title', 'employment_date'
     ])
+    
+    # Add example data
+    example_data = {
+        'first_name': 'John',
+        'last_name': 'Doe',
+        'gender': 'M',
+        'date_of_birth': '1995-01-01',
+        'contact_number': '1234567890',
+        'email': 'john.doe@example.com',
+        'registration_number': 'REG001',
+        'course_name': 'Computer Science',
+        'graduation_year': 2023,
+        'is_employed': 'Yes',
+        'employer_name': 'Tech Company Ltd',
+        'job_title': 'Software Developer',
+        'employment_date': '2023-06-01'
+    }
+    df = pd.concat([df, pd.DataFrame([example_data])], ignore_index=True)
     
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename=graduate_template.xlsx'
@@ -134,3 +205,22 @@ def export_graduates_pdf(request):
     p.showPage()
     p.save()
     return response
+
+@login_required
+@user_passes_test(lambda u: is_admin(u) or is_field_officer(u))
+def edit_graduate(request, pk):
+    graduate = get_object_or_404(Graduate, pk=pk)
+    if request.method == 'POST':
+        form = GraduateForm(request.POST, instance=graduate)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Graduate updated successfully!')
+            return redirect('graduate_list')
+    else:
+        form = GraduateForm(instance=graduate)
+    
+    return render(request, 'graduates/add_graduate.html', {
+        'form': form,
+        'edit_mode': True,
+        'graduate': graduate
+    })
