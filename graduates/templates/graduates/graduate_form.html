@@ -1,0 +1,96 @@
+{% extends 'graduates/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Add Graduate</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.first_name|crispy }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.last_name|crispy }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.gender|crispy }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.date_of_birth|crispy }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.contact_number|crispy }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.email|crispy }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            {{ form.registration_number|crispy }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.graduation_year|crispy }}
+                        </div>
+                    </div>
+
+                    {{ form.course_name|crispy }}
+
+                    <div class="row">
+                        <div class="col-12">
+                            {{ form.is_employed|crispy }}
+                        </div>
+                    </div>
+
+                    <div id="employment-details">
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.employer_name|crispy }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.job_title|crispy }}
+                            </div>
+                        </div>
+                        {{ form.employment_date|crispy }}
+                    </div>
+
+                    <div class="text-end mt-3">
+                        <a href="{% url 'graduate_list' %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Graduate</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleEmploymentDetails() {
+        const isEmployed = document.getElementById('id_is_employed').checked;
+        const employmentDetails = document.getElementById('employment-details');
+        employmentDetails.style.display = isEmployed ? 'block' : 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const isEmployedCheckbox = document.getElementById('id_is_employed');
+        isEmployedCheckbox.addEventListener('change', toggleEmploymentDetails);
+        toggleEmploymentDetails();
+    });
+</script>
+{% endblock %}

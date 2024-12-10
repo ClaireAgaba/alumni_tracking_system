@@ -1,0 +1,34 @@
+{% extends 'graduates/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Upload Graduates</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    Please download the template first and fill it with graduate data before uploading.
+                </div>
+
+                <a href="{% url 'download_template' %}" class="btn btn-secondary mb-4">
+                    <i class="fas fa-download"></i> Download Template
+                </a>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    
+                    <div class="text-end mt-3">
+                        <a href="{% url 'graduate_list' %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

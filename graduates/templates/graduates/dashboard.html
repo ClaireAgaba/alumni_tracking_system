@@ -1,0 +1,166 @@
+{% extends 'graduates/base.html' %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="row fade-in">
+    <!-- Stats Cards -->
+    <div class="col-md-4 mb-4">
+        <div class="stats-card">
+            <div class="icon">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <h3>Total Graduates</h3>
+            <div class="number" id="totalGraduates">{{ total_graduates }}</div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="stats-card">
+            <div class="icon">
+                <i class="fas fa-briefcase"></i>
+            </div>
+            <h3>Employed Graduates</h3>
+            <div class="number" id="employedGraduates">{{ employed_graduates }}</div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="stats-card">
+            <div class="icon">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <h3>Employment Rate</h3>
+            <div class="number">
+                {% if total_graduates %}
+                {% widthratio employed_graduates total_graduates 100 %}%
+                {% else %}
+                0%
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Chart -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Graduates by Year
+                </h5>
+                <div class="chart-container">
+                    <canvas id="graduatesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-bolt me-2"></i>
+                    Quick Actions
+                </h5>
+                <div class="list-group">
+                    {% if user.user_type == 'admin' or user.user_type == 'field_officer' %}
+                    <a href="{% url 'add_graduate' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Add Graduate
+                        <i class="fas fa-chevron-right float-end mt-1"></i>
+                    </a>
+                    <a href="{% url 'upload_graduates' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-file-upload me-2"></i>
+                        Upload Graduates
+                        <i class="fas fa-chevron-right float-end mt-1"></i>
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'export_excel' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-file-excel me-2"></i>
+                        Export to Excel
+                        <i class="fas fa-chevron-right float-end mt-1"></i>
+                    </a>
+                    <a href="{% url 'export_pdf' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-file-pdf me-2"></i>
+                        Export to PDF
+                        <i class="fas fa-chevron-right float-end mt-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-clock me-2"></i>
+                    Recent Activity
+                </h5>
+                <div class="timeline">
+                    {% for graduate in graduates|slice:":5" %}
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <small class="text-muted">{{ graduate.created_at|timesince }} ago</small>
+                            <p class="mb-0">{{ graduate.first_name }} {{ graduate.last_name }} was added</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No recent activity</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate stats numbers
+        updateStatsCard('totalGraduates', {{ total_graduates }});
+        updateStatsCard('employedGraduates', {{ employed_graduates }});
+
+        // Initialize graduates chart
+        const ctx = document.getElementById('graduatesChart').getContext('2d');
+        const graduatesData = {{ graduates_by_year|safe }};
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: graduatesData.map(item => item.graduation_year),
+                datasets: [{
+                    label: 'Number of Graduates',
+                    data: graduatesData.map(item => item.count),
+                    backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                    borderColor: 'rgba(52, 152, 219, 1)',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    barThickness: 30
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

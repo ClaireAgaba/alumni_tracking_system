@@ -1,0 +1,248 @@
+{% extends 'graduates/base.html' %}
+
+{% block content %}
+<div class="card fade-in">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0">
+            <i class="fas fa-user-graduate me-2"></i>
+            Graduates List
+        </h5>
+        <div class="d-flex gap-2">
+            {% if user.user_type == 'admin' or user.user_type == 'field_officer' %}
+            <a href="{% url 'add_graduate' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-1"></i> Add Graduate
+            </a>
+            <a href="{% url 'upload_graduates' %}" class="btn btn-success">
+                <i class="fas fa-file-upload me-1"></i> Upload
+            </a>
+            {% endif %}
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-download me-1"></i> Export
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item" href="{% url 'export_excel' %}">
+                            <i class="fas fa-file-excel me-2"></i> Excel
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{% url 'export_pdf' %}">
+                            <i class="fas fa-file-pdf me-2"></i> PDF
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Search and Filter -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="tableSearch" placeholder="Search graduates...">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex justify-content-end gap-2">
+                    <select class="form-select w-auto" id="yearFilter">
+                        <option value="">All Years</option>
+                        {% for year in graduation_years %}
+                        <option value="{{ year }}">{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                    <select class="form-select w-auto" id="employmentFilter">
+                        <option value="">All Status</option>
+                        <option value="employed">Employed</option>
+                        <option value="unemployed">Not Employed</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>
+                            <div class="d-flex align-items-center">
+                                Registration Number
+                                <i class="fas fa-sort ms-1"></i>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="d-flex align-items-center">
+                                Name
+                                <i class="fas fa-sort ms-1"></i>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="d-flex align-items-center">
+                                Course
+                                <i class="fas fa-sort ms-1"></i>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="d-flex align-items-center">
+                                Graduation Year
+                                <i class="fas fa-sort ms-1"></i>
+                            </div>
+                        </th>
+                        <th>Employment Status</th>
+                        <th>Contact</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for graduate in graduates %}
+                    <tr>
+                        <td>{{ graduate.registration_number }}</td>
+                        <td>{{ graduate.first_name }} {{ graduate.last_name }}</td>
+                        <td>{{ graduate.course_name }}</td>
+                        <td>{{ graduate.graduation_year }}</td>
+                        <td>
+                            {% if graduate.is_employed %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-briefcase me-1"></i> Employed
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-user-clock me-1"></i> Not Employed
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="popover" 
+                                    data-bs-content="<strong>Email:</strong> {{ graduate.email }}<br><strong>Phone:</strong> {{ graduate.contact_number }}"
+                                    data-bs-html="true">
+                                <i class="fas fa-info-circle"></i>
+                            </button>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-primary" 
+                                        data-bs-toggle="modal" data-bs-target="#graduateModal{{ graduate.id }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                {% if user.user_type == 'admin' or user.user_type == 'field_officer' %}
+                                <a href="{% url 'edit_graduate' graduate.id %}" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Graduate Details Modal -->
+                    <div class="modal fade" id="graduateModal{{ graduate.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Graduate Details</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-muted">Personal Information</h6>
+                                            <p><strong>Name:</strong> {{ graduate.first_name }} {{ graduate.last_name }}</p>
+                                            <p><strong>Gender:</strong> {{ graduate.get_gender_display }}</p>
+                                            <p><strong>Date of Birth:</strong> {{ graduate.date_of_birth }}</p>
+                                            <p><strong>Contact:</strong> {{ graduate.contact_number }}</p>
+                                            <p><strong>Email:</strong> {{ graduate.email }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-muted">Academic Information</h6>
+                                            <p><strong>Registration Number:</strong> {{ graduate.registration_number }}</p>
+                                            <p><strong>Course:</strong> {{ graduate.course_name }}</p>
+                                            <p><strong>Graduation Year:</strong> {{ graduate.graduation_year }}</p>
+                                            
+                                            <h6 class="text-muted mt-4">Employment Information</h6>
+                                            <p><strong>Status:</strong> 
+                                                {% if graduate.is_employed %}
+                                                <span class="badge bg-success">Employed</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">Not Employed</span>
+                                                {% endif %}
+                                            </p>
+                                            {% if graduate.is_employed %}
+                                            <p><strong>Employer:</strong> {{ graduate.employer_name }}</p>
+                                            <p><strong>Job Title:</strong> {{ graduate.job_title }}</p>
+                                            <p><strong>Employment Date:</strong> {{ graduate.employment_date }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-inbox fa-3x mb-3"></i>
+                                <p>No graduates found.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize popovers
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl, {
+            trigger: 'hover'
+        })
+    })
+
+    // Search functionality
+    document.getElementById('tableSearch').addEventListener('keyup', function() {
+        var searchText = this.value.toLowerCase();
+        var rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(function(row) {
+            var text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchText) ? '' : 'none';
+        });
+    });
+
+    // Year filter
+    document.getElementById('yearFilter').addEventListener('change', function() {
+        filterTable();
+    });
+
+    // Employment filter
+    document.getElementById('employmentFilter').addEventListener('change', function() {
+        filterTable();
+    });
+
+    function filterTable() {
+        var yearFilter = document.getElementById('yearFilter').value;
+        var employmentFilter = document.getElementById('employmentFilter').value;
+        var rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(function(row) {
+            var yearCell = row.cells[3].textContent;
+            var employmentCell = row.cells[4].textContent;
+            var yearMatch = !yearFilter || yearCell.includes(yearFilter);
+            var employmentMatch = !employmentFilter || 
+                                (employmentFilter === 'employed' && employmentCell.includes('Employed')) ||
+                                (employmentFilter === 'unemployed' && employmentCell.includes('Not Employed'));
+            
+            row.style.display = yearMatch && employmentMatch ? '' : 'none';
+        });
+    }
+</script>
+{% endblock %}

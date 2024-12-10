@@ -1,0 +1,156 @@
+/* Custom styles for UBTEB Graduate Tracking System */
+
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --accent-color: #e74c3c;
+    --success-color: #27ae60;
+    --warning-color: #f1c40f;
+    --light-gray: #f8f9fa;
+    --dark-gray: #343a40;
+}
+
+body {
+    background-color: #f5f6fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Navbar Styling */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+/* Card Styling */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-header {
+    background-color: white;
+    border-bottom: 2px solid var(--light-gray);
+    border-radius: 10px 10px 0 0 !important;
+}
+
+/* Dashboard Stats Cards */
+.stats-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.stats-card .icon {
+    font-size: 2.5rem;
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+}
+
+.stats-card .number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+/* Tables */
+.table {
+    background: white;
+    border-radius: 10px;
+}
+
+.table thead th {
+    background-color: var(--light-gray);
+    border-bottom: 2px solid #dee2e6;
+    color: var(--primary-color);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+}
+
+/* Buttons */
+.btn {
+    border-radius: 5px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+    transform: translateY(-2px);
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+/* Forms */
+.form-control {
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    padding: 0.75rem;
+}
+
+.form-control:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+/* Badges */
+.badge {
+    padding: 0.5em 1em;
+    border-radius: 20px;
+}
+
+.badge.bg-success {
+    background-color: var(--success-color) !important;
+}
+
+/* Charts */
+.chart-container {
+    background: white;
+    padding: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+    
+    .table-responsive {
+        border-radius: 10px;
+    }
+}
