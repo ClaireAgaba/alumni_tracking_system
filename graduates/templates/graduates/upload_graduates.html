@@ -1,0 +1,62 @@
+{% extends 'graduates/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-upload me-2"></i>
+                    Upload Graduates
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading mb-2">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Excel File Requirements:
+                    </h6>
+                    <p class="mb-0">Your Excel file should have the following columns:</p>
+                    <ul class="mb-0">
+                        <li>first_name</li>
+                        <li>last_name</li>
+                        <li>gender (M/F)</li>
+                        <li>date_of_birth (YYYY-MM-DD)</li>
+                        <li>contact_number</li>
+                        <li>email</li>
+                        <li>registration_number</li>
+                        <li>course_name</li>
+                        <li>graduation_year (YYYY)</li>
+                        <li>is_employed (Yes/No)</li>
+                        <li>employer_name (optional)</li>
+                        <li>job_title (optional)</li>
+                        <li>employment_date (YYYY-MM-DD, optional)</li>
+                    </ul>
+                    <hr>
+                    <p class="mb-0">
+                        <i class="fas fa-download me-1"></i>
+                        You can <a href="{% url 'download_template' %}" class="alert-link">download our template</a> or use your own Excel file following the format above.
+                    </p>
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload me-2"></i>
+                            Upload Graduates
+                        </button>
+                        <a href="{% url 'graduate_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

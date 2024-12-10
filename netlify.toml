@@ -1,0 +1,16 @@
+[build]
+  command = "python manage.py collectstatic --noinput && python manage.py migrate"
+  publish = "staticfiles"
+  functions = "netlify/functions"
+
+[build.environment]
+  PYTHON_VERSION = "3.11.4"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[dev]
+  framework = "django"
+  targetPort = 8000
