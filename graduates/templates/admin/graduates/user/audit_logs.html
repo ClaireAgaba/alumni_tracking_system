@@ -1,0 +1,65 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    .audit-log {
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .audit-log:hover {
+      background-color: #f8f9fa;
+    }
+    .audit-log-time {
+      color: #666;
+      font-size: 0.9em;
+    }
+    .audit-log-action {
+      font-weight: bold;
+      color: #007bff;
+    }
+    .audit-log-details {
+      margin-top: 0.5rem;
+    }
+    .audit-log-ip {
+      color: #666;
+      font-size: 0.9em;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{{ title }}</h1>
+    
+    <div class="module">
+        <div style="margin-bottom: 2rem;">
+            <h2>User Information</h2>
+            <p><strong>Username:</strong> {{ user_obj.username }}</p>
+            <p><strong>Email:</strong> {{ user_obj.email }}</p>
+            <p><strong>User Type:</strong> {{ user_obj.get_user_type_display }}</p>
+            <p><strong>Group:</strong> {{ user_obj.group|default:"No Group" }}</p>
+            <p><strong>Last Login:</strong> {{ user_obj.last_login|default:"Never" }}</p>
+        </div>
+
+        <h2>Audit Logs</h2>
+        {% if logs %}
+            {% for log in logs %}
+                <div class="audit-log">
+                    <div class="audit-log-time">{{ log.created_at }}</div>
+                    <div class="audit-log-action">{{ log.get_action_display }}</div>
+                    <div class="audit-log-details">{{ log.details }}</div>
+                    {% if log.ip_address %}
+                        <div class="audit-log-ip">IP: {{ log.ip_address }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No audit logs found for this user.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

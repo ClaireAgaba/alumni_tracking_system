@@ -16,6 +16,21 @@ def is_admin(user):
 def is_field_officer(user):
     return user.user_type == 'field_officer'
 
+def is_officer(user):
+    return user.user_type == 'officer'
+
+def can_manage_data(user):
+    """Users who can add/edit graduate data"""
+    return user.user_type in ['admin', 'field_officer']
+
+def can_view_reports(user):
+    """Users who can view and generate reports"""
+    return user.user_type in ['admin', 'officer']
+
+def can_manage_users(user):
+    """Only admins can manage user accounts"""
+    return user.user_type == 'admin'
+
 @login_required
 def dashboard(request):
     # Basic statistics
@@ -23,9 +38,9 @@ def dashboard(request):
     employed_graduates = Graduate.objects.filter(is_employed=True).count()
     
     # Graduates by year
-    graduates_by_year = list(Graduate.objects.values('graduation_year')
+    graduates_by_year = list(Graduate.objects.values('graduation_date__year')
                            .annotate(count=Count('id'))
-                           .order_by('graduation_year'))
+                           .order_by('graduation_date__year'))
     
     # Employment statistics by course
     course_stats = list(Graduate.objects.values('course__name')
@@ -41,20 +56,27 @@ def dashboard(request):
                        .order_by('gender'))
     
     # Recent graduates
-    recent_graduates = Graduate.objects.all().order_by('-created_at')[:5]
+    if request.user.user_type == 'field_officer':
+        # Field officers only see their own submissions
+        recent_graduates = Graduate.objects.filter(created_by=request.user).order_by('-created_at')[:5]
+    else:
+        # Admins and officers see all
+        recent_graduates = Graduate.objects.all().order_by('-created_at')[:5]
     
     context = {
         'total_graduates': total_graduates,
         'employed_graduates': employed_graduates,
+        'employment_rate': (employed_graduates / total_graduates * 100) if total_graduates > 0 else 0,
         'graduates_by_year': graduates_by_year,
         'course_stats': course_stats,
         'gender_stats': gender_stats,
         'recent_graduates': recent_graduates,
+        'user_type': request.user.user_type,
     }
     return render(request, 'graduates/dashboard.html', context)
 
 @login_required
-@user_passes_test(lambda u: is_admin(u) or is_field_officer(u))
+@user_passes_test(can_manage_data)
 def add_graduate(request):
     if request.method == 'POST':
         form = GraduateForm(request.POST)
@@ -71,11 +93,21 @@ def add_graduate(request):
 
 @login_required
 def graduate_list(request):
-    graduates = Graduate.objects.all().order_by('-created_at')
-    return render(request, 'graduates/graduate_list.html', {'graduates': graduates})
+    if request.user.user_type == 'field_officer':
+        # Field officers only see their own submissions
+        graduates = Graduate.objects.filter(created_by=request.user).order_by('-created_at')
+    else:
+        # Admins and officers see all
+        graduates = Graduate.objects.all().order_by('-created_at')
+    
+    return render(request, 'graduates/graduate_list.html', {
+        'graduates': graduates,
+        'can_manage_data': can_manage_data(request.user),
+        'can_view_reports': can_view_reports(request.user),
+    })
 
 @login_required
-@user_passes_test(lambda u: is_admin(u) or is_field_officer(u))
+@user_passes_test(can_manage_data)
 def upload_graduates(request):
     if request.method == 'POST':
         form = GraduateBulkUploadForm(request.POST, request.FILES)
@@ -84,7 +116,6 @@ def upload_graduates(request):
             upload.uploaded_by = request.user
             upload.save()
             
-            # Process Excel file
             try:
                 df = pd.read_excel(upload.file.path)
                 
@@ -192,6 +223,7 @@ def upload_graduates(request):
     return render(request, 'graduates/upload_graduates.html', {'form': form})
 
 @login_required
+@user_passes_test(can_manage_data)
 def download_excel_template(request):
     # Create Excel template
     df = pd.DataFrame(columns=[
@@ -253,6 +285,7 @@ def download_excel_template(request):
     return response
 
 @login_required
+@user_passes_test(can_view_reports)
 def export_graduates_excel(request):
     graduates = Graduate.objects.all()
     df = pd.DataFrame(list(graduates.values()))
@@ -263,6 +296,7 @@ def export_graduates_excel(request):
     return response
 
 @login_required
+@user_passes_test(can_view_reports)
 def export_graduates_pdf(request):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename=graduates.pdf'
@@ -284,9 +318,15 @@ def export_graduates_pdf(request):
     return response
 
 @login_required
-@user_passes_test(lambda u: is_admin(u) or is_field_officer(u))
+@user_passes_test(can_manage_data)
 def edit_graduate(request, pk):
     graduate = get_object_or_404(Graduate, pk=pk)
+    
+    # Field officers can only edit their own submissions
+    if request.user.user_type == 'field_officer' and graduate.created_by != request.user:
+        messages.error(request, 'You can only edit your own submissions.')
+        return redirect('graduate_list')
+    
     if request.method == 'POST':
         form = GraduateForm(request.POST, instance=graduate)
         if form.is_valid():
@@ -296,11 +336,7 @@ def edit_graduate(request, pk):
     else:
         form = GraduateForm(instance=graduate)
     
-    return render(request, 'graduates/add_graduate.html', {
-        'form': form,
-        'edit_mode': True,
-        'graduate': graduate
-    })
+    return render(request, 'graduates/edit_graduate.html', {'form': form})
 
 @login_required
 def get_exam_centers(request):

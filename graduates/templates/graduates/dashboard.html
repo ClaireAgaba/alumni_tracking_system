@@ -49,13 +49,7 @@
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="card-subtitle text-muted mb-1">Employment Rate</h6>
-                            <h2 class="card-title mb-0">
-                                {% if total_graduates %}
-                                {% widthratio employed_graduates total_graduates 100 %}%
-                                {% else %}
-                                0%
-                                {% endif %}
-                            </h2>
+                            <h2 class="card-title mb-0" id="employmentRate">{{ employment_rate|floatformat:1 }}%</h2>
                         </div>
                     </div>
                 </div>
@@ -64,33 +58,27 @@
     </div>
 
     <!-- Charts Row -->
-    <div class="row g-4 mb-4">
+    <div class="row g-4 mt-4">
         <!-- Graduates by Year -->
         <div class="col-md-6">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-bar me-2 text-primary"></i>
-                        Graduates by Year
-                    </h5>
+                    <h5 class="card-title mb-0">Graduates by Year</h5>
                 </div>
                 <div class="card-body">
-                    <canvas id="graduatesChart" height="300"></canvas>
+                    <canvas id="graduatesByYearChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Employment by Course -->
+        <!-- Course Distribution -->
         <div class="col-md-6">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-pie me-2 text-success"></i>
-                        Employment by Course
-                    </h5>
+                    <h5 class="card-title mb-0">Course Distribution</h5>
                 </div>
                 <div class="card-body">
-                    <canvas id="courseChart" height="300"></canvas>
+                    <canvas id="courseDistributionChart"></canvas>
                 </div>
             </div>
         </div>
@@ -206,6 +194,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Common chart options
@@ -213,21 +202,20 @@
         Chart.defaults.font.family = "'Poppins', 'Helvetica', 'Arial', sans-serif";
         
         // Graduates by Year Chart
-        const graduatesData = {{ graduates_by_year|safe }};
-        new Chart(document.getElementById('graduatesChart').getContext('2d'), {
+        const graduatesByYearData = {
+            labels: [{% for item in graduates_by_year %}'{{ item.graduation_date__year }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Number of Graduates',
+                data: [{% for item in graduates_by_year %}{{ item.count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        new Chart(document.getElementById('graduatesByYearChart').getContext('2d'), {
             type: 'bar',
-            data: {
-                labels: graduatesData.map(item => item.graduation_year),
-                datasets: [{
-                    label: 'Number of Graduates',
-                    data: graduatesData.map(item => item.count),
-                    backgroundColor: 'rgba(13, 110, 253, 0.2)',
-                    borderColor: 'rgb(13, 110, 253)',
-                    borderWidth: 1,
-                    borderRadius: 4,
-                    barThickness: 20
-                }]
-            },
+            data: graduatesByYearData,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -249,7 +237,7 @@
 
         // Course Employment Chart
         const courseData = {{ course_stats|safe }};
-        new Chart(document.getElementById('courseChart').getContext('2d'), {
+        new Chart(document.getElementById('courseDistributionChart').getContext('2d'), {
             type: 'pie',
             data: {
                 labels: courseData.map(item => item.course__name),

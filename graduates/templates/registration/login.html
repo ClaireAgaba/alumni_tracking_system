@@ -1,45 +1,54 @@
-{% extends "base.html" %}
+{% extends "base_auth.html" %}
 
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="text-center">Login</h3>
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="text-center mb-0">
+                        <i class="fas fa-graduation-cap me-2"></i>Graduate Tracking System
+                    </h3>
                 </div>
                 <div class="card-body">
                     {% if form.errors %}
                     <div class="alert alert-danger">
-                        Your username and password didn't match. Please try again.
+                        <i class="fas fa-exclamation-circle me-2"></i>Your username and password didn't match. Please try again.
                     </div>
                     {% endif %}
 
                     {% if next %}
                         {% if user.is_authenticated %}
                         <div class="alert alert-warning">
-                            Your account doesn't have access to this page. To proceed,
-                            please login with an account that has access.
+                            <i class="fas fa-exclamation-triangle me-2"></i>Your account doesn't have access to this page.
                         </div>
                         {% else %}
                         <div class="alert alert-info">
-                            Please login to see this page.
+                            <i class="fas fa-info-circle me-2"></i>Please login to continue.
                         </div>
                         {% endif %}
                     {% endif %}
 
-                    <form method="post" action="{% url 'login' %}">
+                    <form method="post" action="{% url 'login' %}" class="mt-4">
                         {% csrf_token %}
-                        <div class="mb-3">
+                        <div class="mb-4">
                             <label for="username" class="form-label">Username</label>
-                            <input type="text" name="username" class="form-control" id="username" required>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" name="username" class="form-control form-control-lg" id="username" required>
+                            </div>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-4">
                             <label for="password" class="form-label">Password</label>
-                            <input type="password" name="password" class="form-control" id="password" required>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" name="password" class="form-control form-control-lg" id="password" required>
+                            </div>
                         </div>
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">Login</button>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </button>
                         </div>
                         <input type="hidden" name="next" value="{{ next }}">
                     </form>
