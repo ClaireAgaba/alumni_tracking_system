@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
-import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,7 +26,7 @@ SECRET_KEY = 'django-insecure-9*@(w^vi7s+@!^gz13g_^&6(xx#mkyd$d1x4gankv-c!5+if==
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = 'DEVELOPMENT' in os.environ
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.netlify.app']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.pythonanywhere.com']
 
 
 # Application definition
@@ -86,11 +85,24 @@ WSGI_APPLICATION = 'ubteb_system.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3'),
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
+
+# When deploying to PythonAnywhere, uncomment and update these settings:
+"""
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'your_username$default',
+        'USER': 'your_username',
+        'PASSWORD': 'your_mysql_password',
+        'HOST': 'your_username.mysql.pythonanywhere-services.com',
+    }
+}
+"""
 
 
 # Password validation
@@ -142,7 +154,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # CSRF settings
-CSRF_TRUSTED_ORIGINS = ['https://*.netlify.app']
+CSRF_TRUSTED_ORIGINS = ['https://*.pythonanywhere.com']
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
