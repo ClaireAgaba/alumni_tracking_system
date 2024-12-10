@@ -1,1 +1,1 @@
-web: gunicorn ubteb_system.wsgi:application --log-file -
+web: gunicorn ubteb_system.wsgi:application
