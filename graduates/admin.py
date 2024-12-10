@@ -1,51 +1,48 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from .models import User, Graduate, GraduateBulkUpload, District, Course, ExamCenter
+from .models import User, Graduate, Course, District, ExamCenter, GraduateBulkUpload
 
-class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'user_type', 'is_active')
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ('username', 'email', 'first_name', 'last_name', 'user_type')
     list_filter = ('user_type', 'is_active')
-    search_fields = ('username', 'email')
-    fieldsets = (
-        (None, {'fields': ('username', 'password')}),
-        ('Personal info', {'fields': ('first_name', 'last_name', 'email', 'phone_number')}),
-        ('Permissions', {'fields': ('user_type', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-    )
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('username', 'password1', 'password2', 'user_type', 'email', 'first_name', 'last_name', 'phone_number'),
-        }),
-    )
+    search_fields = ('username', 'email', 'first_name', 'last_name')
 
-class GraduateAdmin(admin.ModelAdmin):
-    list_display = ('registration_number', 'first_name', 'last_name', 'course', 'graduation_year', 'is_employed')
-    list_filter = ('graduation_year', 'is_employed', 'course', 'district')
-    search_fields = ('registration_number', 'first_name', 'last_name', 'course__name')
-    date_hierarchy = 'created_at'
+@admin.register(Course)
+class CourseAdmin(admin.ModelAdmin):
+    list_display = ('name', 'department')
+    list_filter = ('department',)
+    search_fields = ('name', 'department')
 
-class GraduateBulkUploadAdmin(admin.ModelAdmin):
-    list_display = ('uploaded_by', 'uploaded_at', 'is_processed')
-    list_filter = ('is_processed', 'uploaded_at')
-
+@admin.register(District)
 class DistrictAdmin(admin.ModelAdmin):
     list_display = ('name', 'region')
     list_filter = ('region',)
     search_fields = ('name', 'region')
 
-class CourseAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'department')
-    list_filter = ('department',)
-    search_fields = ('code', 'name', 'department')
-
+@admin.register(ExamCenter)
 class ExamCenterAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'district')
-    list_filter = ('district',)
-    search_fields = ('code', 'name', 'district__name')
+    list_display = ('name',)
+    search_fields = ('name',)
 
-admin.site.register(User, CustomUserAdmin)
-admin.site.register(Graduate, GraduateAdmin)
-admin.site.register(GraduateBulkUpload, GraduateBulkUploadAdmin)
-admin.site.register(District, DistrictAdmin)
-admin.site.register(Course, CourseAdmin)
-admin.site.register(ExamCenter, ExamCenterAdmin)
+@admin.register(Graduate)
+class GraduateAdmin(admin.ModelAdmin):
+    list_display = (
+        'registration_number', 'first_name', 'last_name',
+        'course', 'graduation_year', 'is_employed',
+        'current_district', 'exam_center'
+    )
+    list_filter = (
+        'graduation_year', 'is_employed',
+        'course', 'current_district', 'exam_center'
+    )
+    search_fields = (
+        'registration_number', 'first_name', 'last_name',
+        'employer_name', 'job_title'
+    )
+    date_hierarchy = 'created_at'
+
+@admin.register(GraduateBulkUpload)
+class GraduateBulkUploadAdmin(admin.ModelAdmin):
+    list_display = ('uploaded_by', 'uploaded_at', 'is_processed')
+    list_filter = ('is_processed', 'uploaded_at')
+    search_fields = ('uploaded_by__username',)

@@ -24,23 +24,20 @@ class District(models.Model):
         ordering = ['name']
 
 class Course(models.Model):
-    code = models.CharField(max_length=20, unique=True)
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, unique=True)
     department = models.CharField(max_length=100)
     
     def __str__(self):
-        return f"{self.name} ({self.code})"
+        return self.name
     
     class Meta:
         ordering = ['name']
 
 class ExamCenter(models.Model):
-    code = models.CharField(max_length=20, unique=True)
-    name = models.CharField(max_length=200)
-    district = models.ForeignKey(District, on_delete=models.PROTECT)
+    name = models.CharField(max_length=200, unique=True)
     
     def __str__(self):
-        return f"{self.name} ({self.code})"
+        return self.name
     
     class Meta:
         ordering = ['name']
@@ -75,9 +72,9 @@ class Graduate(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    # Additional fields
-    district = models.ForeignKey(District, on_delete=models.PROTECT)
-    exam_center = models.ForeignKey(ExamCenter, on_delete=models.PROTECT)
+    # Location and Institution
+    current_district = models.ForeignKey(District, on_delete=models.PROTECT, null=True, help_text="Current district of residence")
+    exam_center = models.ForeignKey(ExamCenter, on_delete=models.PROTECT, help_text="Institution attended")
     
     def __str__(self):
         return f"{self.first_name} {self.last_name} - {self.registration_number}"

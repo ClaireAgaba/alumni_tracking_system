@@ -1,41 +1,41 @@
 {% extends 'graduates/base.html' %}
 
 {% block content %}
-<div class="card fade-in">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-        <h5 class="mb-0">
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+        <h4 class="mb-0">
             <i class="fas fa-user-graduate me-2"></i>
             Graduates List
-        </h5>
-        <div class="d-flex gap-2">
+        </h4>
+        <div class="d-flex gap-2 mt-2 mt-md-0">
             {% if user.user_type == 'admin' or user.user_type == 'field_officer' %}
             <a href="{% url 'add_graduate' %}" class="btn btn-primary">
-                <i class="fas fa-user-plus me-1"></i> Add Graduate
+                <i class="fas fa-user-plus me-2"></i>Add Graduate
             </a>
             <a href="{% url 'upload_graduates' %}" class="btn btn-success">
-                <i class="fas fa-file-upload me-1"></i> Upload
+                <i class="fas fa-file-upload me-2"></i>Upload
             </a>
             {% endif %}
             <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="fas fa-download me-1"></i> Export
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown">
+                    <i class="fas fa-download me-2"></i>Export
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
+                <ul class="dropdown-menu">
                     <li>
                         <a class="dropdown-item" href="{% url 'export_excel' %}">
-                            <i class="fas fa-file-excel me-2"></i> Excel
+                            <i class="fas fa-file-excel me-2"></i>Excel
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" href="{% url 'export_pdf' %}">
-                            <i class="fas fa-file-pdf me-2"></i> PDF
+                            <i class="fas fa-file-pdf me-2"></i>PDF
                         </a>
                     </li>
                 </ul>
             </div>
         </div>
     </div>
-    <div class="card-body">
+    <div class="card-body p-0">
         <!-- Search and Filter -->
         <div class="row mb-4">
             <div class="col-md-6">
@@ -63,9 +63,8 @@
             </div>
         </div>
 
-        <!-- Table -->
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table table-hover mb-0">
                 <thead>
                     <tr>
                         <th>
@@ -139,42 +138,43 @@
 
                     <!-- Graduate Details Modal -->
                     <div class="modal fade" id="graduateModal{{ graduate.id }}" tabindex="-1">
-                        <div class="modal-dialog modal-lg">
+                        <div class="modal-dialog modal-dialog-scrollable">
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <h5 class="modal-title">Graduate Details</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <h6 class="text-muted">Personal Information</h6>
-                                            <p><strong>Name:</strong> {{ graduate.first_name }} {{ graduate.last_name }}</p>
-                                            <p><strong>Gender:</strong> {{ graduate.get_gender_display }}</p>
-                                            <p><strong>Date of Birth:</strong> {{ graduate.date_of_birth }}</p>
-                                            <p><strong>Contact:</strong> {{ graduate.contact_number }}</p>
-                                            <p><strong>Email:</strong> {{ graduate.email }}</p>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <h6 class="text-muted">Academic Information</h6>
-                                            <p><strong>Registration Number:</strong> {{ graduate.registration_number }}</p>
-                                            <p><strong>Course:</strong> {{ graduate.course_name }}</p>
-                                            <p><strong>Graduation Year:</strong> {{ graduate.graduation_year }}</p>
-                                            
-                                            <h6 class="text-muted mt-4">Employment Information</h6>
-                                            <p><strong>Status:</strong> 
-                                                {% if graduate.is_employed %}
-                                                <span class="badge bg-success">Employed</span>
-                                                {% else %}
-                                                <span class="badge bg-secondary">Not Employed</span>
-                                                {% endif %}
-                                            </p>
+                                    <div class="mb-3">
+                                        <h6 class="text-muted">Personal Information</h6>
+                                        <p class="mb-1"><strong>Name:</strong> {{ graduate.first_name }} {{ graduate.last_name }}</p>
+                                        <p class="mb-1"><strong>Gender:</strong> {{ graduate.get_gender_display }}</p>
+                                        <p class="mb-1"><strong>Date of Birth:</strong> {{ graduate.date_of_birth }}</p>
+                                        <p class="mb-1"><strong>Contact:</strong> {{ graduate.contact_number }}</p>
+                                        <p class="mb-1"><strong>Email:</strong> {{ graduate.email }}</p>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <h6 class="text-muted">Academic Information</h6>
+                                        <p class="mb-1"><strong>Registration Number:</strong> {{ graduate.registration_number }}</p>
+                                        <p class="mb-1"><strong>Course:</strong> {{ graduate.course_name }}</p>
+                                        <p class="mb-1"><strong>Graduation Year:</strong> {{ graduate.graduation_year }}</p>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <h6 class="text-muted">Employment Information</h6>
+                                        <p class="mb-1"><strong>Status:</strong> 
                                             {% if graduate.is_employed %}
-                                            <p><strong>Employer:</strong> {{ graduate.employer_name }}</p>
-                                            <p><strong>Job Title:</strong> {{ graduate.job_title }}</p>
-                                            <p><strong>Employment Date:</strong> {{ graduate.employment_date }}</p>
+                                            <span class="badge bg-success">Employed</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">Unemployed</span>
                                             {% endif %}
-                                        </div>
+                                        </p>
+                                        {% if graduate.is_employed %}
+                                        <p class="mb-1"><strong>Employer:</strong> {{ graduate.employer_name }}</p>
+                                        <p class="mb-1"><strong>Job Title:</strong> {{ graduate.job_title }}</p>
+                                        <p class="mb-1"><strong>Employment Date:</strong> {{ graduate.employment_date }}</p>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>

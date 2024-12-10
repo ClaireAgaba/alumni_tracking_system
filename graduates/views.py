@@ -4,8 +4,10 @@ from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from django.db.models import Count, Q
 import pandas as pd
+import openpyxl
+from openpyxl.utils import get_column_letter
 from reportlab.pdfgen import canvas
-from .models import Graduate, GraduateBulkUpload, ExamCenter
+from .models import Graduate, GraduateBulkUpload, ExamCenter, Course, District
 from .forms import GraduateForm, GraduateBulkUploadForm
 
 def is_admin(user):
@@ -94,7 +96,8 @@ def upload_graduates(request):
                 required_columns = [
                     'first_name', 'last_name', 'gender', 'date_of_birth',
                     'contact_number', 'email', 'registration_number',
-                    'course_name', 'graduation_year', 'is_employed'
+                    'course_name', 'graduation_year', 'is_employed',
+                    'current_district', 'exam_center'
                 ]
                 
                 # Convert column names to lowercase and strip whitespace
@@ -128,6 +131,26 @@ def upload_graduates(request):
                             employment_date = None
                             print(f"Invalid employment_date format in row {index + 2}")
                         
+                        # Get or create course
+                        course, _ = Course.objects.get_or_create(
+                            name=str(row['course_name']),
+                            defaults={'department': 'Default Department'}
+                        )
+                        
+                        # Get district and exam center
+                        district_name = str(row.get('current_district', '')).strip()
+                        try:
+                            district = District.objects.get(name__iexact=district_name)
+                        except District.DoesNotExist:
+                            messages.warning(request, f'District "{district_name}" in row {index + 2} not found. Please choose from the provided list.')
+                            continue
+                            
+                        try:
+                            exam_center = ExamCenter.objects.get(name=str(row['exam_center']))
+                        except ExamCenter.DoesNotExist:
+                            exam_center = None
+                            print(f"Exam center not found in row {index + 2}")
+                        
                         Graduate.objects.create(
                             first_name=str(row['first_name']),
                             last_name=str(row['last_name']),
@@ -136,12 +159,14 @@ def upload_graduates(request):
                             contact_number=str(row['contact_number']),
                             email=str(row['email']),
                             registration_number=str(row['registration_number']),
-                            course_name=str(row['course_name']),
+                            course=course,
                             graduation_year=int(float(row['graduation_year'])),
                             is_employed=is_employed,
                             employer_name=str(row.get('employer_name', '')),
                             job_title=str(row.get('job_title', '')),
-                            employment_date=employment_date,
+                            employment_start_date=employment_date,
+                            current_district=district,
+                            exam_center=exam_center,
                             created_by=request.user
                         )
                         successful_imports += 1
@@ -173,30 +198,58 @@ def download_excel_template(request):
         'first_name', 'last_name', 'gender', 'date_of_birth',
         'contact_number', 'email', 'registration_number',
         'course_name', 'graduation_year', 'is_employed',
-        'employer_name', 'job_title', 'employment_date'
+        'employer_name', 'job_title', 'employment_date',
+        'current_district', 'exam_center'
     ])
     
-    # Add example data
-    example_data = {
-        'first_name': 'John',
-        'last_name': 'Doe',
-        'gender': 'M',
-        'date_of_birth': '1995-01-01',
-        'contact_number': '1234567890',
-        'email': 'john.doe@example.com',
-        'registration_number': 'REG001',
-        'course_name': 'Computer Science',
-        'graduation_year': 2023,
-        'is_employed': 'Yes',
-        'employer_name': 'Tech Company Ltd',
-        'job_title': 'Software Developer',
-        'employment_date': '2023-06-01'
-    }
-    df = pd.concat([df, pd.DataFrame([example_data])], ignore_index=True)
-    
+    # Create a response with Excel MIME type
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=graduate_template.xlsx'
-    df.to_excel(response, index=False)
+    response['Content-Disposition'] = 'attachment; filename=graduate_upload_template.xlsx'
+    
+    # Save DataFrame to Excel with formatting
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Template')
+        worksheet = writer.sheets['Template']
+        
+        # Format header row
+        for col in worksheet.iter_cols(min_row=1, max_row=1):
+            cell = col[0]
+            cell.font = openpyxl.styles.Font(bold=True)
+            cell.fill = openpyxl.styles.PatternFill(start_color='CCCCCC', end_color='CCCCCC', fill_type='solid')
+        
+        # Add data validation for gender
+        gender_validation = openpyxl.worksheet.datavalidation.DataValidation(
+            type="list",
+            formula1='"M,F"',
+            allow_blank=True
+        )
+        worksheet.add_data_validation(gender_validation)
+        gender_col = openpyxl.utils.get_column_letter(3)  # Column C for gender
+        gender_validation.add(f'{gender_col}2:{gender_col}1000')
+        
+        # Add data validation for is_employed
+        employed_validation = openpyxl.worksheet.datavalidation.DataValidation(
+            type="list",
+            formula1='"Yes,No"',
+            allow_blank=True
+        )
+        worksheet.add_data_validation(employed_validation)
+        employed_col = openpyxl.utils.get_column_letter(10)  # Column J for is_employed
+        employed_validation.add(f'{employed_col}2:{employed_col}1000')
+        
+        # Auto-adjust column widths
+        for column in worksheet.columns:
+            max_length = 0
+            column = [cell for cell in column]
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(cell.value)
+                except:
+                    pass
+            adjusted_width = (max_length + 2)
+            worksheet.column_dimensions[openpyxl.utils.get_column_letter(column[0].column)].width = adjusted_width
+    
     return response
 
 @login_required
@@ -251,8 +304,16 @@ def edit_graduate(request, pk):
 
 @login_required
 def get_exam_centers(request):
-    district_id = request.GET.get('district')
-    if district_id:
-        exam_centers = ExamCenter.objects.filter(district_id=district_id).values('id', 'name')
-        return JsonResponse(list(exam_centers), safe=False)
-    return JsonResponse([], safe=False)
+    district_id = request.GET.get('current_district')
+    exam_centers = ExamCenter.objects.all().values('id', 'name')
+    return JsonResponse(list(exam_centers), safe=False)
+
+@login_required
+def get_programs(request):
+    programs = Course.objects.all().values('id', 'name')
+    return JsonResponse(list(programs), safe=False)
+
+@login_required
+def get_districts(request):
+    districts = District.objects.all().values('id', 'name').order_by('name')
+    return JsonResponse(list(districts), safe=False)
