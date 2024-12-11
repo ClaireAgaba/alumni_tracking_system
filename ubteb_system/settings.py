@@ -32,7 +32,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-9*@(w^vi7s+@!^gz13g_^&6(xx#mkyd$d1x4gankv-c!5+if==')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     'web-production-316d.up.railway.app',
@@ -100,14 +100,10 @@ WSGI_APPLICATION = 'ubteb_system.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASE_URL = "postgresql://postgres:VoxzCSGPjVzLhHfOndsrJJpMJwNEFlP@monorail.proxy.rlwy.net:33025/railway"
-
 DATABASES = {
     'default': dj_database_url.config(
-        default=DATABASE_URL,
+        default=os.getenv('DATABASE_URL'),
         conn_max_age=600,
-        conn_health_checks=True,
-        ssl_require=True,
     )
 }
 
