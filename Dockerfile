@@ -16,10 +16,12 @@ COPY . /code/
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         postgresql-client \
+        build-essential \
+        python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Create static directory
 RUN python manage.py collectstatic --noinput
