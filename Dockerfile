@@ -7,22 +7,19 @@ ENV PORT=8000
 
 # Set work directory
 WORKDIR /code
+COPY . /code/
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    gcc \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-# Copy project
-COPY . .
-
 # Create static directory
-RUN mkdir -p staticfiles
+RUN python manage.py collectstatic --noinput
 
 # Run gunicorn
-CMD gunicorn ubteb_system.wsgi:application --bind 0.0.0.0:$PORT
+CMD python manage.py migrate && gunicorn ubteb_system.wsgi:application --bind 0.0.0.0:$PORT

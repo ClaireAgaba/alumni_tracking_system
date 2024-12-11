@@ -92,18 +92,15 @@ WSGI_APPLICATION = 'ubteb_system.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+DATABASE_URL = "postgresql://postgres:VoxzCSGPjVzLhHfOndsrJJpMJwNEFlP@monorail.proxy.rlwy.net:33025/railway"
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'railway',
-        'USER': 'postgres',
-        'PASSWORD': os.environ.get('PGPASSWORD', 'VoxzCSGPjVzLhHfOndsrJJpMJwNEFlP'),
-        'HOST': 'autorack.proxy.rlwy.net',
-        'PORT': '33025',
-        'OPTIONS': {
-            'sslmode': 'require',
-        }
-    }
+    'default': dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=600,
+        conn_health_checks=True,
+        ssl_require=True,
+    )
 }
 
 
