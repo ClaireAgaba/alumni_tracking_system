@@ -19,5 +19,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 RUN mkdir -p staticfiles
 RUN python manage.py collectstatic --noinput
-
-CMD gunicorn ubteb_system.wsgi:application --bind 0.0.0.0:$PORT --log-level debug
+CMD ["python3","manage.py","runserver","0.0.0.0:8000"]
+#CMD gunicorn ubteb_system.wsgi:application --bind 0.0.0.0:$PORT --log-level debug
