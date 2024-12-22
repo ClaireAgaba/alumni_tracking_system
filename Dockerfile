@@ -40,4 +40,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 #    python manage.py createsuperuser --noinput || true && \
  #   gunicorn ubteb_system.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120 --access-logfile -
 #CMD gunicorn ubteb_system.wsgi:application --bind 0.0.0.0:$PORT --log-level debug
-CMD python manage.py runserver 0.0.0.0:$PORT
+CMD ["gunicorn", "ubteb_system.wsgi:application", "--bind", "0.0.0.0:$PORT", "--workers", "4", "--timeout", "120", "--access-logfile", "-"]
