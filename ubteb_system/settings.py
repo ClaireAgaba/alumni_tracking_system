@@ -32,7 +32,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-9*@(w^vi7s+@!^gz13g_^&6(xx#mkyd$d1x4gankv-c!5+if==')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://*.railway.app']
@@ -86,7 +86,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'ubteb_system.wsgi.application'
+#WSGI_APPLICATION = 'ubteb_system.wsgi.application'
 
 
 # Database
@@ -94,14 +94,23 @@ WSGI_APPLICATION = 'ubteb_system.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('PGDATABASE', 'railway'),
-        'USER': os.getenv('PGUSER', 'postgres'),
-        'PASSWORD': os.getenv('PGPASSWORD', ''),
-        'HOST': os.getenv('PGHOST', 'localhost'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': os.getenv('PGDATABASE', 'claire'),
+        'USER': os.getenv('PGUSER', 'claire'),
+        'PASSWORD': os.getenv('PGPASSWORD', 'claire'),
+        'HOST': os.getenv('PGHOST', '173.230.140.201'),
         'PORT': os.getenv('PGPORT', '5432'),
     }
 }
+'''
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',  # Database file location
+    }
+}
+'''
+
 
 
 # Password validation
