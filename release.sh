@@ -3,15 +3,14 @@ set -e  # Exit on error
 
 echo "Starting release process..."
 
-echo "Checking environment..."
-if [ -z "$DATABASE_URL" ]; then
-    echo "ERROR: DATABASE_URL is not set!"
-    exit 1
-fi
+echo "Making migrations..."
+python manage.py makemigrations graduates
+
+echo "Showing current migration status..."
+python manage.py showmigrations graduates
 
 echo "Running migrations..."
-python manage.py showmigrations
-python manage.py migrate --noinput
+python manage.py migrate
 
 echo "Creating superuser..."
 python create_superuser.py

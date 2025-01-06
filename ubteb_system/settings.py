@@ -15,6 +15,7 @@ import os
 from dotenv import load_dotenv
 import dj_database_url
 import sys
+import socket
 
 # Load environment variables from .env file if it exists
 try:
@@ -37,7 +38,6 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
 # Print environment variables for debugging (excluding sensitive data)
 print("DEBUG:", DEBUG, file=sys.stderr)
-print("DATABASE_URL exists:", bool(os.getenv('DATABASE_URL')), file=sys.stderr)
 
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://*.railway.app']
@@ -97,26 +97,29 @@ TEMPLATES = [
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Force PostgreSQL in production
-if not DEBUG:  # In production
-    if not os.getenv('DATABASE_URL'):
-        raise Exception('DATABASE_URL environment variable is required in production!')
-    
+# Check if we're running on Railway
+IS_RAILWAY = socket.gethostname().endswith('.railway.app')
+
+if IS_RAILWAY:  # Production settings
     DATABASES = {
-        'default': dj_database_url.config(
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'railway',
+            'USER': 'postgres',
+            'PASSWORD': 'FgCc4D*2cAG-6bfbEgc5aB2GdEBbgc2F',
+            'HOST': 'monorail.proxy.rlwy.net',
+            'PORT': '44183',
+        }
     }
-    print("Using PostgreSQL database", file=sys.stderr)
-else:  # In development
+    print("Using PostgreSQL database on Railway", file=sys.stderr)
+else:  # Development settings
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-    print("Using SQLite database", file=sys.stderr)
+    print("Using SQLite database locally", file=sys.stderr)
 
 
 # Password validation
