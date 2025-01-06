@@ -3,39 +3,23 @@ set -e  # Exit on error
 
 echo "Starting release process..."
 
-echo "Waiting for MySQL to be ready..."
-python - << END
-import sys
-import time
-import MySQLdb
+echo "Testing database connection..."
+python test_db.py
 
-for i in range(30):
-    try:
-        MySQLdb.connect(
-            host='monorail.proxy.rlwy.net',
-            port=21891,
-            user='root',
-            password='dFbcF3H6e4Hf2-5EEFhfGGBECFhB5hc6',
-            db='railway'
-        )
-        print("MySQL is ready!")
-        sys.exit(0)
-    except MySQLdb.Error as e:
-        print(f"MySQL not ready yet (attempt {i+1}/30): {e}")
-        time.sleep(1)
-sys.exit(1)
-END
-
-echo "Making migrations..."
+echo "Removing any existing migrations..."
+rm -f graduates/migrations/0*.py
 python manage.py makemigrations graduates
 
 echo "Showing current migration status..."
 python manage.py showmigrations graduates
 
 echo "Running migrations..."
-python manage.py migrate
+python manage.py migrate --no-input
 
 echo "Creating superuser..."
 python create_superuser.py
+
+echo "Verifying database setup..."
+python test_db.py
 
 echo "Release process completed!"

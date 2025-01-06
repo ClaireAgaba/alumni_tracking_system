@@ -98,34 +98,28 @@ TEMPLATES = [
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 import socket
+import sys
 
-# Check if we're running on Railway
-IS_RAILWAY = socket.gethostname().endswith('.railway.app')
+# Print debug information
+print("Current hostname:", socket.gethostname(), file=sys.stderr)
+print("Environment variables:", {k: v for k, v in os.environ.items() if 'SECRET' not in k.upper()}, file=sys.stderr)
 
-if IS_RAILWAY:  # Production settings
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'railway',
-            'USER': 'root',
-            'PASSWORD': 'dFbcF3H6e4Hf2-5EEFhfGGBECFhB5hc6',
-            'HOST': 'monorail.proxy.rlwy.net',
-            'PORT': '21891',
-            'OPTIONS': {
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-                'charset': 'utf8mb4',
-            }
+# Always use MySQL
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'railway',
+        'USER': 'root',
+        'PASSWORD': 'dFbcF3H6e4Hf2-5EEFhfGGBECFhB5hc6',
+        'HOST': 'monorail.proxy.rlwy.net',
+        'PORT': '21891',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            'charset': 'utf8mb4',
         }
     }
-    print("Using MySQL database on Railway", file=sys.stderr)
-else:  # Development settings
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-    print("Using SQLite database locally", file=sys.stderr)
+}
+print("Database configuration:", DATABASES['default'], file=sys.stderr)
 
 
 # Password validation
