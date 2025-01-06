@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 import dj_database_url
+import sys
 
 # Load environment variables from .env file if it exists
 try:
@@ -32,7 +33,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-9*@(w^vi7s+@!^gz13g_^&6(xx#mkyd$d1x4gankv-c!5+if==')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
+
+# Print environment variables for debugging (excluding sensitive data)
+print("DEBUG:", DEBUG, file=sys.stderr)
+print("DATABASE_URL exists:", bool(os.getenv('DATABASE_URL')), file=sys.stderr)
 
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://*.railway.app']
@@ -92,20 +97,26 @@ TEMPLATES = [
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-if os.getenv('DATABASE_URL'):
+# Force PostgreSQL in production
+if not DEBUG:  # In production
+    if not os.getenv('DATABASE_URL'):
+        raise Exception('DATABASE_URL environment variable is required in production!')
+    
     DATABASES = {
         'default': dj_database_url.config(
             conn_max_age=600,
             conn_health_checks=True,
         )
     }
-else:
+    print("Using PostgreSQL database", file=sys.stderr)
+else:  # In development
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+    print("Using SQLite database", file=sys.stderr)
 
 
 # Password validation
