@@ -108,9 +108,9 @@ if IS_RAILWAY:  # Production settings
             'ENGINE': 'django.db.backends.mysql',
             'NAME': 'railway',
             'USER': 'root',
-            'PASSWORD': 'hFEH6h2GfBcHAeC5dg1fBc5cEhbGh3Hf',
+            'PASSWORD': 'dFbcF3H6e4Hf2-5EEFhfGGBECFhB5hc6',
             'HOST': 'monorail.proxy.rlwy.net',
-            'PORT': '44183',
+            'PORT': '21891',
             'OPTIONS': {
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
                 'charset': 'utf8mb4',
