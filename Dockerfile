@@ -12,10 +12,11 @@ COPY . /code/
 # Install system dependencies
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        postgresql-client \
+        default-libmysqlclient-dev \
         build-essential \
         python3-dev \
         curl \
+        pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies

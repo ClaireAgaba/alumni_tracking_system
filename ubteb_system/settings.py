@@ -97,21 +97,27 @@ TEMPLATES = [
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+import socket
+
 # Check if we're running on Railway
 IS_RAILWAY = socket.gethostname().endswith('.railway.app')
 
 if IS_RAILWAY:  # Production settings
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql',
+            'ENGINE': 'django.db.backends.mysql',
             'NAME': 'railway',
-            'USER': 'postgres',
-            'PASSWORD': 'FgCc4D*2cAG-6bfbEgc5aB2GdEBbgc2F',
+            'USER': 'root',
+            'PASSWORD': 'hFEH6h2GfBcHAeC5dg1fBc5cEhbGh3Hf',
             'HOST': 'monorail.proxy.rlwy.net',
             'PORT': '44183',
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',
+            }
         }
     }
-    print("Using PostgreSQL database on Railway", file=sys.stderr)
+    print("Using MySQL database on Railway", file=sys.stderr)
 else:  # Development settings
     DATABASES = {
         'default': {
