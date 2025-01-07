@@ -9,6 +9,11 @@ from openpyxl.utils import get_column_letter
 from reportlab.pdfgen import canvas
 from .models import Graduate, GraduateBulkUpload, ExamCenter, Course, District
 from .forms import GraduateForm, GraduateBulkUploadForm
+import logging
+import traceback
+from django.core.exceptions import ObjectDoesNotExist
+
+logger = logging.getLogger(__name__)
 
 def is_admin(user):
     return user.user_type == 'admin'
@@ -34,59 +39,96 @@ def can_manage_users(user):
 @login_required
 def dashboard(request):
     try:
+        logger.info(f"Dashboard accessed by user: {request.user.username}")
+        
+        # Print request information
+        logger.info(f"Request method: {request.method}")
+        logger.info(f"Request path: {request.path}")
+        logger.info(f"User type: {request.user.user_type}")
+        
         # Basic statistics
-        total_graduates = Graduate.objects.count()
-        employed_graduates = Graduate.objects.filter(is_employed=True).count()
+        try:
+            total_graduates = Graduate.objects.count()
+            logger.info(f"Total graduates: {total_graduates}")
+        except Exception as e:
+            logger.error(f"Error getting total graduates: {str(e)}")
+            total_graduates = 0
+            
+        try:
+            employed_graduates = Graduate.objects.filter(is_employed=True).count()
+            logger.info(f"Employed graduates: {employed_graduates}")
+        except Exception as e:
+            logger.error(f"Error getting employed graduates: {str(e)}")
+            employed_graduates = 0
         
         # Graduates by year
-        graduates_by_year = list(Graduate.objects.values('graduation_date__year')
-                               .annotate(count=Count('id'))
-                               .order_by('graduation_date__year'))
+        try:
+            graduates_by_year = list(Graduate.objects.values('graduation_date__year')
+                                   .annotate(count=Count('id'))
+                                   .order_by('graduation_date__year'))
+            logger.info(f"Graduates by year: {graduates_by_year}")
+        except Exception as e:
+            logger.error(f"Error getting graduates by year: {str(e)}")
+            graduates_by_year = []
         
         # Employment statistics by course
-        course_stats = list(Graduate.objects.values('course__name')
-                           .annotate(
-                               total=Count('id'),
-                               employed=Count('id', filter=Q(is_employed=True))
-                           )
-                           .order_by('-total'))
+        try:
+            course_stats = list(Graduate.objects.values('course__name')
+                               .annotate(
+                                   total=Count('id'),
+                                   employed=Count('id', filter=Q(is_employed=True))
+                               )
+                               .order_by('-total'))
+            logger.info(f"Course stats: {course_stats}")
+        except Exception as e:
+            logger.error(f"Error getting course stats: {str(e)}")
+            course_stats = []
         
         # Gender distribution
-        gender_stats = list(Graduate.objects.values('gender')
-                           .annotate(count=Count('id'))
-                           .order_by('gender'))
+        try:
+            gender_stats = list(Graduate.objects.values('gender')
+                               .annotate(count=Count('id'))
+                               .order_by('gender'))
+            logger.info(f"Gender stats: {gender_stats}")
+        except Exception as e:
+            logger.error(f"Error getting gender stats: {str(e)}")
+            gender_stats = []
         
         # Recent graduates
-        if request.user.user_type == 'field_officer':
-            # Field officers only see their own submissions
-            recent_graduates = Graduate.objects.filter(created_by=request.user).order_by('-created_at')[:5]
-        else:
-            # Admins and officers see all
-            recent_graduates = Graduate.objects.all().order_by('-created_at')[:5]
+        try:
+            if request.user.user_type == 'field_officer':
+                recent_graduates = Graduate.objects.filter(created_by=request.user).order_by('-created_at')[:5]
+            else:
+                recent_graduates = Graduate.objects.all().order_by('-created_at')[:5]
+            logger.info(f"Recent graduates count: {len(recent_graduates)}")
+        except Exception as e:
+            logger.error(f"Error getting recent graduates: {str(e)}")
+            recent_graduates = []
         
         # Calculate employment rate safely
         employment_rate = (employed_graduates / total_graduates * 100) if total_graduates > 0 else 0
         
-        # Prepare context with safe defaults
         context = {
             'total_graduates': total_graduates,
             'employed_graduates': employed_graduates,
             'employment_rate': employment_rate,
-            'graduates_by_year': graduates_by_year or [],
-            'course_stats': course_stats or [],
-            'gender_stats': gender_stats or [],
+            'graduates_by_year': graduates_by_year,
+            'course_stats': course_stats,
+            'gender_stats': gender_stats,
             'recent_graduates': recent_graduates,
             'user_type': request.user.user_type,
         }
         
+        logger.info("Dashboard context prepared successfully")
         return render(request, 'graduates/dashboard.html', context)
         
     except Exception as e:
-        # Log the error for debugging
-        print(f"Dashboard Error: {str(e)}")
+        logger.error(f"Dashboard error: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         # Return a simple error page with basic stats
         context = {
             'error': True,
+            'error_message': str(e),
             'total_graduates': Graduate.objects.count(),
             'user_type': request.user.user_type,
         }
