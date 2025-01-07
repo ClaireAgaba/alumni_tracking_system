@@ -162,22 +162,33 @@ import sys
 print("Current hostname:", socket.gethostname(), file=sys.stderr)
 print("Environment variables:", {k: v for k, v in os.environ.items() if 'SECRET' not in k.upper()}, file=sys.stderr)
 
-# Always use MySQL
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'gts_dev',
-        'USER': 'root',
-        'PASSWORD': 'root',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8mb4',
+# Get the DATABASE_URL from environment variable
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if DATABASE_URL:  # Production/Railway environment
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+else:  # Local development environment
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'gts_dev',
+            'USER': 'root',
+            'PASSWORD': 'root',
+            'HOST': 'localhost',
+            'PORT': '3306',
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',
+            }
         }
     }
-}
-print("Database configuration:", DATABASES['default'], file=sys.stderr)
+print("Database configuration:", {k: v for k, v in DATABASES['default'].items() if k != 'PASSWORD'}, file=sys.stderr)
 
 
 # Password validation
