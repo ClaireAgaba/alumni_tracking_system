@@ -117,22 +117,25 @@ class District(models.Model):
 
 class Course(models.Model):
     name = models.CharField(max_length=200, unique=True)
+    code = models.CharField(max_length=20, unique=True, null=True, blank=True)
     department = models.CharField(max_length=100)
-    
-    def __str__(self):
-        return self.name
     
     class Meta:
         ordering = ['name']
 
+    def __str__(self):
+        return f"{self.name} ({self.code})" if self.code else self.name
+
 class ExamCenter(models.Model):
     name = models.CharField(max_length=200, unique=True)
-    
-    def __str__(self):
-        return self.name
+    code = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    district = models.ForeignKey(District, on_delete=models.CASCADE, null=True, blank=True)
     
     class Meta:
         ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} ({self.code})" if self.code else self.name
 
 class Graduate(models.Model):
     GENDER_CHOICES = (

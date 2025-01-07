@@ -5,6 +5,7 @@ from django.http import HttpResponse, JsonResponse
 from django.db.models import Count, Q
 import pandas as pd
 import openpyxl
+from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 from reportlab.pdfgen import canvas
 from .models import Graduate, GraduateBulkUpload, ExamCenter, Course, District
@@ -346,35 +347,96 @@ def download_excel_template(request):
 @login_required
 @user_passes_test(can_view_reports)
 def export_graduates_excel(request):
-    graduates = Graduate.objects.all()
-    df = pd.DataFrame(list(graduates.values()))
-    
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=graduates.xlsx'
-    df.to_excel(response, index=False)
-    return response
+    try:
+        # Get graduates with related fields
+        graduates = Graduate.objects.select_related('exam_center', 'exam_center__district', 'course').all()
+        
+        # Prepare data for Excel
+        data = []
+        for graduate in graduates:
+            data.append({
+                'Registration Number': graduate.registration_number,
+                'First Name': graduate.first_name,
+                'Last Name': graduate.last_name,
+                'Gender': graduate.get_gender_display(),
+                'Date of Birth': graduate.date_of_birth.strftime('%Y-%m-%d') if graduate.date_of_birth else '',
+                'Email': graduate.email,
+                'Phone Number': graduate.phone_number,
+                'Course': graduate.course.name if graduate.course else '',
+                'Graduation Date': graduate.graduation_date.strftime('%Y-%m-%d') if graduate.graduation_date else '',
+                'Exam Center': graduate.exam_center.name if graduate.exam_center else '',
+                'District': graduate.exam_center.district.name if graduate.exam_center and graduate.exam_center.district else '',
+                'Employment Status': 'Employed' if graduate.is_employed else 'Not Employed',
+                'Employer': graduate.employer_name if graduate.is_employed else '',
+                'Job Title': graduate.job_title if graduate.is_employed else '',
+                'Employment Date': graduate.employment_date.strftime('%Y-%m-%d') if graduate.employment_date else '',
+            })
+        
+        # Convert to DataFrame
+        df = pd.DataFrame(data)
+        
+        # Create response
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename=graduates.xlsx'
+        
+        # Create Excel writer
+        with pd.ExcelWriter(response, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Graduates')
+            
+            # Get the worksheet
+            worksheet = writer.sheets['Graduates']
+            
+            # Format headers
+            for col in worksheet.columns:
+                max_length = 0
+                column = col[0].column_letter  # Get the column name
+                
+                # Find the maximum length in the column
+                for cell in col:
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except:
+                        pass
+                
+                # Set the column width
+                adjusted_width = (max_length + 2)
+                worksheet.column_dimensions[column].width = adjusted_width
+                
+                # Format header row
+                header_cell = worksheet[f"{column}1"]
+                header_cell.font = openpyxl.styles.Font(bold=True)
+                header_cell.fill = openpyxl.styles.PatternFill(start_color='333333', end_color='333333', fill_type='solid')
+                header_cell.font = openpyxl.styles.Font(color='FFFFFF', bold=True)
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error exporting Excel: {str(e)}", exc_info=True)
+        messages.error(request, "An error occurred while generating the Excel file. Please try again.")
+        return redirect('graduate_list')
 
 @login_required
 @user_passes_test(can_view_reports)
 def export_graduates_pdf(request):
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename=graduates.pdf'
-    
-    # Create PDF
-    p = canvas.Canvas(response)
-    p.drawString(100, 800, "UBTEB Graduates Report")
-    
-    y = 750
-    for graduate in Graduate.objects.all():
-        p.drawString(100, y, f"{graduate.first_name} {graduate.last_name} - {graduate.registration_number}")
-        y -= 20
-        if y < 50:
-            p.showPage()
-            y = 750
-    
-    p.showPage()
-    p.save()
-    return response
+    try:
+        # Get all graduates
+        graduates = Graduate.objects.select_related('exam_center', 'exam_center__district').all()
+        
+        # Create the HttpResponse object with PDF headers
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename=graduates.pdf'
+        
+        # Generate PDF using our utility function
+        from .utils import generate_graduate_pdf
+        generate_graduate_pdf(response, graduates)
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error generating PDF: {str(e)}", exc_info=True)
+        messages.error(request, "An error occurred while generating the PDF. Please try again.")
+        return redirect('graduate_list')
 
 @login_required
 @user_passes_test(can_manage_data)
