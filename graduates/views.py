@@ -33,47 +33,64 @@ def can_manage_users(user):
 
 @login_required
 def dashboard(request):
-    # Basic statistics
-    total_graduates = Graduate.objects.count()
-    employed_graduates = Graduate.objects.filter(is_employed=True).count()
-    
-    # Graduates by year
-    graduates_by_year = list(Graduate.objects.values('graduation_date__year')
+    try:
+        # Basic statistics
+        total_graduates = Graduate.objects.count()
+        employed_graduates = Graduate.objects.filter(is_employed=True).count()
+        
+        # Graduates by year
+        graduates_by_year = list(Graduate.objects.values('graduation_date__year')
+                               .annotate(count=Count('id'))
+                               .order_by('graduation_date__year'))
+        
+        # Employment statistics by course
+        course_stats = list(Graduate.objects.values('course__name')
+                           .annotate(
+                               total=Count('id'),
+                               employed=Count('id', filter=Q(is_employed=True))
+                           )
+                           .order_by('-total'))
+        
+        # Gender distribution
+        gender_stats = list(Graduate.objects.values('gender')
                            .annotate(count=Count('id'))
-                           .order_by('graduation_date__year'))
-    
-    # Employment statistics by course
-    course_stats = list(Graduate.objects.values('course__name')
-                       .annotate(
-                           total=Count('id'),
-                           employed=Count('id', filter=Q(is_employed=True))
-                       )
-                       .order_by('-total'))
-    
-    # Gender distribution
-    gender_stats = list(Graduate.objects.values('gender')
-                       .annotate(count=Count('id'))
-                       .order_by('gender'))
-    
-    # Recent graduates
-    if request.user.user_type == 'field_officer':
-        # Field officers only see their own submissions
-        recent_graduates = Graduate.objects.filter(created_by=request.user).order_by('-created_at')[:5]
-    else:
-        # Admins and officers see all
-        recent_graduates = Graduate.objects.all().order_by('-created_at')[:5]
-    
-    context = {
-        'total_graduates': total_graduates,
-        'employed_graduates': employed_graduates,
-        'employment_rate': (employed_graduates / total_graduates * 100) if total_graduates > 0 else 0,
-        'graduates_by_year': graduates_by_year,
-        'course_stats': course_stats,
-        'gender_stats': gender_stats,
-        'recent_graduates': recent_graduates,
-        'user_type': request.user.user_type,
-    }
-    return render(request, 'graduates/dashboard.html', context)
+                           .order_by('gender'))
+        
+        # Recent graduates
+        if request.user.user_type == 'field_officer':
+            # Field officers only see their own submissions
+            recent_graduates = Graduate.objects.filter(created_by=request.user).order_by('-created_at')[:5]
+        else:
+            # Admins and officers see all
+            recent_graduates = Graduate.objects.all().order_by('-created_at')[:5]
+        
+        # Calculate employment rate safely
+        employment_rate = (employed_graduates / total_graduates * 100) if total_graduates > 0 else 0
+        
+        # Prepare context with safe defaults
+        context = {
+            'total_graduates': total_graduates,
+            'employed_graduates': employed_graduates,
+            'employment_rate': employment_rate,
+            'graduates_by_year': graduates_by_year or [],
+            'course_stats': course_stats or [],
+            'gender_stats': gender_stats or [],
+            'recent_graduates': recent_graduates,
+            'user_type': request.user.user_type,
+        }
+        
+        return render(request, 'graduates/dashboard.html', context)
+        
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Dashboard Error: {str(e)}")
+        # Return a simple error page with basic stats
+        context = {
+            'error': True,
+            'total_graduates': Graduate.objects.count(),
+            'user_type': request.user.user_type,
+        }
+        return render(request, 'graduates/dashboard.html', context)
 
 @login_required
 @user_passes_test(can_manage_data)

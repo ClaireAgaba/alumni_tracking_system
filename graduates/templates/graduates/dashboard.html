@@ -2,6 +2,13 @@
 
 {% block content %}
 <div class="container-fluid py-4">
+    {% if error %}
+    <div class="alert alert-warning">
+        <h4 class="alert-heading">Dashboard is loading...</h4>
+        <p>We're experiencing some technical difficulties. Basic information is still available below.</p>
+    </div>
+    {% endif %}
+
     <!-- Stats Cards Row -->
     <div class="row g-4 mb-4">
         <div class="col-md-4">
@@ -15,12 +22,13 @@
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="card-subtitle text-muted mb-1">Total Graduates</h6>
-                            <h2 class="card-title mb-0" id="totalGraduates">{{ total_graduates }}</h2>
+                            <h2 class="card-title mb-0">{{ total_graduates|default:"0" }}</h2>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        {% if not error %}
         <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body">
@@ -32,7 +40,7 @@
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="card-subtitle text-muted mb-1">Employed Graduates</h6>
-                            <h2 class="card-title mb-0" id="employedGraduates">{{ employed_graduates }}</h2>
+                            <h2 class="card-title mb-0">{{ employed_graduates|default:"0" }}</h2>
                         </div>
                     </div>
                 </div>
@@ -49,14 +57,16 @@
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="card-subtitle text-muted mb-1">Employment Rate</h6>
-                            <h2 class="card-title mb-0" id="employmentRate">{{ employment_rate|floatformat:1 }}%</h2>
+                            <h2 class="card-title mb-0">{{ employment_rate|default:"0"|floatformat:1 }}%</h2>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        {% endif %}
     </div>
 
+    {% if not error %}
     <!-- Charts Row -->
     <div class="row g-4 mt-4">
         <!-- Graduates by Year -->
@@ -85,9 +95,9 @@
     </div>
 
     <!-- Bottom Row -->
-    <div class="row g-4">
+    <div class="row g-4 mt-4">
         <!-- Gender Distribution -->
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0">
                     <h5 class="card-title mb-0">
@@ -96,126 +106,73 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <canvas id="genderChart" height="250"></canvas>
+                    <canvas id="genderChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Activity -->
-        <div class="col-md-8">
+        <!-- Recent Graduates -->
+        <div class="col-md-6">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-clock me-2 text-warning"></i>
-                        Recent Activity
+                        Recent Graduates
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="timeline">
+                    <div class="list-group list-group-flush">
                         {% for graduate in recent_graduates %}
-                        <div class="timeline-item">
-                            <div class="timeline-content">
-                                <div class="d-flex align-items-center mb-1">
-                                    <span class="badge bg-primary me-2">New Graduate</span>
-                                    <small class="text-muted">{{ graduate.created_at|timesince }} ago</small>
-                                </div>
-                                <p class="mb-0">
-                                    {{ graduate.first_name }} {{ graduate.last_name }}
-                                    <span class="text-muted">•</span>
-                                    {{ graduate.course.name }}
-                                </p>
+                        <div class="list-group-item px-0">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ graduate.first_name }} {{ graduate.last_name }}</h6>
+                                <small class="text-muted">{{ graduate.graduation_date|date:"M Y" }}</small>
                             </div>
+                            <p class="mb-1">{{ graduate.course.name }}</p>
+                            <small class="text-muted">
+                                {% if graduate.is_employed %}
+                                <span class="text-success">
+                                    <i class="fas fa-briefcase me-1"></i>Employed
+                                </span>
+                                {% else %}
+                                <span class="text-secondary">
+                                    <i class="fas fa-search me-1"></i>Seeking Employment
+                                </span>
+                                {% endif %}
+                            </small>
                         </div>
                         {% empty %}
-                        <p class="text-muted mb-0">No recent activity</p>
+                        <div class="text-center py-3">
+                            <p class="text-muted mb-0">No recent graduates</p>
+                        </div>
                         {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 {% endblock %}
 
-{% block extra_css %}
-<style>
-    .stats-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .stats-icon i {
-        font-size: 24px;
-    }
-    
-    .timeline {
-        position: relative;
-    }
-    
-    .timeline-item {
-        position: relative;
-        padding-left: 24px;
-        padding-bottom: 20px;
-    }
-    
-    .timeline-item:before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: #e9ecef;
-    }
-    
-    .timeline-item:after {
-        content: '';
-        position: absolute;
-        left: -4px;
-        top: 0;
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: #007bff;
-    }
-    
-    .timeline-item:last-child {
-        padding-bottom: 0;
-    }
-    
-    .timeline-item:last-child:before {
-        display: none;
-    }
-</style>
-{% endblock %}
-
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% if not error %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Common chart options
-        Chart.defaults.color = '#6c757d';
-        Chart.defaults.font.family = "'Poppins', 'Helvetica', 'Arial', sans-serif";
-        
-        // Graduates by Year Chart
-        const graduatesByYearData = {
-            labels: [{% for item in graduates_by_year %}'{{ item.graduation_date__year }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
-            datasets: [{
-                label: 'Number of Graduates',
-                data: [{% for item in graduates_by_year %}{{ item.count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        };
-
-        new Chart(document.getElementById('graduatesByYearChart').getContext('2d'), {
-            type: 'bar',
-            data: graduatesByYearData,
+document.addEventListener('DOMContentLoaded', function() {
+    // Graduates by Year Chart
+    const yearData = {{ graduates_by_year|safe }};
+    if (yearData.length > 0) {
+        new Chart(document.getElementById('graduatesByYearChart'), {
+            type: 'line',
+            data: {
+                labels: yearData.map(item => item.graduation_date__year),
+                datasets: [{
+                    label: 'Number of Graduates',
+                    data: yearData.map(item => item.count),
+                    borderColor: '#0d6efd',
+                    tension: 0.1
+                }]
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -223,70 +180,65 @@
                     legend: {
                         display: false
                     }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        }
-                    }
                 }
             }
         });
+    }
 
-        // Course Employment Chart
-        const courseData = {{ course_stats|safe }};
-        new Chart(document.getElementById('courseDistributionChart').getContext('2d'), {
-            type: 'pie',
+    // Course Distribution Chart
+    const courseData = {{ course_stats|safe }};
+    if (courseData.length > 0) {
+        new Chart(document.getElementById('courseDistributionChart'), {
+            type: 'bar',
             data: {
                 labels: courseData.map(item => item.course__name),
                 datasets: [{
+                    label: 'Total Graduates',
+                    data: courseData.map(item => item.total),
+                    backgroundColor: '#0d6efd'
+                }, {
+                    label: 'Employed',
                     data: courseData.map(item => item.employed),
-                    backgroundColor: [
-                        'rgba(13, 110, 253, 0.7)',
-                        'rgba(25, 135, 84, 0.7)',
-                        'rgba(13, 202, 240, 0.7)',
-                        'rgba(255, 193, 7, 0.7)',
-                        'rgba(220, 53, 69, 0.7)'
-                    ]
+                    backgroundColor: '#198754'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right'
+                scales: {
+                    y: {
+                        beginAtZero: true
                     }
                 }
             }
         });
+    }
 
-        // Gender Distribution Chart
-        const genderData = {{ gender_stats|safe }};
-        new Chart(document.getElementById('genderChart').getContext('2d'), {
-            type: 'doughnut',
+    // Gender Distribution Chart
+    const genderData = {{ gender_stats|safe }};
+    if (genderData.length > 0) {
+        new Chart(document.getElementById('genderChart'), {
+            type: 'pie',
             data: {
-                labels: genderData.map(item => item.gender === 'M' ? 'Male' : 'Female'),
+                labels: genderData.map(item => {
+                    switch(item.gender) {
+                        case 'M': return 'Male';
+                        case 'F': return 'Female';
+                        default: return 'Other';
+                    }
+                }),
                 datasets: [{
                     data: genderData.map(item => item.count),
-                    backgroundColor: [
-                        'rgba(13, 110, 253, 0.7)',
-                        'rgba(255, 193, 7, 0.7)'
-                    ]
+                    backgroundColor: ['#0d6efd', '#dc3545', '#ffc107']
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
+                maintainAspectRatio: false
             }
         });
-    });
+    }
+});
 </script>
+{% endif %}
 {% endblock %}
