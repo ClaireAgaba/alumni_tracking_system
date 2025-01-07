@@ -1,16 +1,28 @@
 """
 WSGI config for ubteb_system project.
-
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/4.2/howto/deployment/wsgi/
 """
 
 import os
-
+import sys
+import logging
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ubteb_system.settings')
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
 
-application = get_wsgi_application()
+logger = logging.getLogger(__name__)
+
+try:
+    logger.info("Initializing WSGI application...")
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ubteb_system.settings')
+    application = get_wsgi_application()
+    logger.info("WSGI application initialized successfully")
+except Exception as e:
+    logger.error(f"Error initializing WSGI application: {str(e)}")
+    raise
